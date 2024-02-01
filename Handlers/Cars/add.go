@@ -6,12 +6,7 @@ import (
 )
 
 func (c *Cars) AddCar(rw http.ResponseWriter, r *http.Request) {
-	car := data.Car{}
-	err := car.FromJson(r.Body)
-	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	data.AddCar(&car)
+	car := r.Context().Value("Car")
+	data.AddCar(car.(*data.Car))
 	rw.WriteHeader(http.StatusCreated)
 }

@@ -24,9 +24,11 @@ func main() {
 
 	postR := sm.Methods(http.MethodPost).Subrouter()
 	postR.HandleFunc("/products", c.AddCar)
+	postR.Use(c.MiddlewareValidateCar)
 
 	putR := sm.Methods(http.MethodPut).Subrouter()
 	putR.HandleFunc("/products", c.Put)
+	putR.Use(c.MiddlewareValidateCar)
 
 	deleteR := sm.Methods(http.MethodDelete).Subrouter()
 	deleteR.HandleFunc("/products/{id:[0-9]+}", c.Delete)

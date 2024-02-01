@@ -9,9 +9,9 @@ import (
 
 type Car struct {
 	Id        int64     `json:"id"`
-	Brand     string    `json:"brand"`
-	SerialNum string    `json:"serialNum"`
-	Color     string    `json:"color"`
+	Brand     string    `json:"brand" validate:"required"`
+	SerialNum string    `json:"serialNum" validate"SerialNum"`
+	Color     string    `json:"color" validate:"required"`
 	CreatedOn time.Time `json:"-"`
 	UpdatedOn time.Time `json:"-"`
 }

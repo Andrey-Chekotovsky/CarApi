@@ -6,12 +6,11 @@ import (
 )
 
 func (c *Cars) Put(rw http.ResponseWriter, r *http.Request) {
-	car := data.Car{}
-	err := car.FromJson(r.Body)
+	car := r.Context().Value("Car").(*data.Car)
+	err := data.Update(*car)
 	if err != nil {
 		rw.WriteHeader(http.StatusNotFound)
 		return
 	}
-	data.Update(car)
 	rw.WriteHeader(http.StatusOK)
 }
