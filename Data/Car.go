@@ -1,10 +1,13 @@
 package data
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 type Car struct {
@@ -19,6 +22,14 @@ type Car struct {
 var ErrCarNotFound = fmt.Errorf("Car not found")
 
 type Cars []*Car
+
+var db *sql.DB
+
+func ConnectToDb(connstring string) error {
+	var err error
+	db, err = sql.Open("postgres", connstring)
+	return err
+}
 
 func (c *Car) FromJson(r io.Reader) error {
 	e := json.NewDecoder(r)
@@ -46,45 +57,6 @@ func findIndexById(id int64) (int, error) {
 	return -1, ErrCarNotFound
 }
 
-func GetCar(id int64) (Car, error) {
-	ind, err := findIndexById(id)
-	if err != nil {
-		return Car{}, err
-	} else {
-		return *cars[ind], nil
-	}
-}
-
-func GetCars() Cars {
-	return cars
-}
-
-func AddCar(car *Car) {
-	car.Id = getNextId()
-	car.CreatedOn = time.Now()
-	car.UpdatedOn = time.Now()
-	cars = append(cars, car)
-}
-
-func DeleteCar(id int64) error {
-	ind, err := findIndexById(id)
-	if err != nil {
-		return err
-	}
-	cars = append(cars[:ind], cars[ind+1])
-	return nil
-}
-
-func Update(car Car) error {
-	ind, err := findIndexById(car.Id)
-	cars[ind] = &car
-	if err != nil {
-		return err
-	} else {
-		return nil
-	}
-}
-
 var currentId int64 = 2
 
 func getNextId() int64 {
@@ -109,4 +81,53 @@ var cars = []*Car{
 		CreatedOn: time.Now(),
 		UpdatedOn: time.Now(),
 	},
+}
+
+func GetCar(id int64) (Car, error) {
+	rows, err := db.Query("SELECT id, brand, serial_number, color FROM cars WHERE id = $1", id)
+	defer rows.Close()
+	if err != nil {
+		return Car{}, err
+	}
+	car := Car{}
+	rows.Next()
+	rows.Scan(&car.Id, &car.Brand, &car.SerialNum, &car.Color)
+	return car, nil
+}
+
+func GetCars() ([]Car, error) {
+	rows, err := db.Query("SELECT id, brand, serial_number, color FROM cars;")
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	c := []Car{}
+	for rows.Next() {
+		car := Car{}
+		rows.Scan(&car.Id, &car.Brand, &car.SerialNum, &car.Color)
+		c = append(c, car)
+	}
+	return c, nil
+}
+
+func AddCar(car *Car) error {
+	command := "INSERT INTO cars(brand, serial_number, color, created_on, updated_on) VALUES ($1, $2, $3, $4, $5);"
+	_, err := db.Exec(command, car.Brand, car.SerialNum, car.Color, car.CreatedOn, car.UpdatedOn)
+	return err
+}
+
+func DeleteCar(id int64) error {
+	command := "DELETE FROM cars WHERE id = $1;"
+	_, err := db.Exec(command, id)
+	if err != nil {
+		return err
+	} else {
+		return nil
+	}
+}
+
+func Update(car Car) error {
+	command := "UPDATE cars SET brand=$1, serial_number=$2, color=$3, updated_on=$4 WHERE id=$5;"
+	_, err := db.Exec(command, car.Brand, car.SerialNum, car.Color, car.UpdatedOn, car.Id)
+	return err
 }

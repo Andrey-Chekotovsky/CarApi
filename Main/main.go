@@ -1,6 +1,7 @@
 package main
 
 import (
+	"data"
 	"fmt"
 	"handlers/cars"
 	"log"
@@ -12,6 +13,12 @@ import (
 )
 
 func main() {
+	constring := "user=postgres dbname=CarDb password=Trazyn host=localhost port=5432 sslmode=disable"
+	err := data.ConnectToDb(constring)
+	if err != nil {
+		fmt.Println("Can't connect to db")
+		panic(err)
+	}
 	fmt.Println("lets go")
 	l := log.New(os.Stdout, "products-api ", log.LstdFlags)
 	sm := mux.NewRouter()
