@@ -1,13 +1,10 @@
 package data
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
 	"time"
-
-	_ "github.com/lib/pq"
 )
 
 type Car struct {
@@ -23,14 +20,6 @@ var ErrCarNotFound = fmt.Errorf("Car not found")
 
 type Cars []*Car
 
-var db *sql.DB
-
-func ConnectToDb(connstring string) error {
-	var err error
-	db, err = sql.Open("postgres", connstring)
-	return err
-}
-
 func (c *Car) FromJson(r io.Reader) error {
 	e := json.NewDecoder(r)
 	return e.Decode(c)
@@ -38,49 +27,6 @@ func (c *Car) FromJson(r io.Reader) error {
 func (c *Cars) toJson(w io.Writer) error {
 	e := json.NewEncoder(w)
 	return e.Encode(c)
-}
-
-func findIndexById(id int64) (int, error) {
-	low := 0
-	high := len(cars) - 1
-	for low <= high {
-		mid := (low + high) / 2
-		if cars[mid].Id == id {
-			return mid, nil
-		}
-		if cars[mid].Id > id {
-			high = mid - 1
-		} else {
-			low = mid + 1
-		}
-	}
-	return -1, ErrCarNotFound
-}
-
-var currentId int64 = 2
-
-func getNextId() int64 {
-	currentId++
-	return currentId
-}
-
-var cars = []*Car{
-	{
-		Id:        1,
-		Brand:     "Moskvich",
-		SerialNum: "ASP-62",
-		Color:     "Red",
-		CreatedOn: time.Now(),
-		UpdatedOn: time.Now(),
-	},
-	{
-		Id:        2,
-		Brand:     "Volga",
-		SerialNum: "ASP-52",
-		Color:     "Blue",
-		CreatedOn: time.Now(),
-		UpdatedOn: time.Now(),
-	},
 }
 
 func GetCar(id int64) (Car, error) {
